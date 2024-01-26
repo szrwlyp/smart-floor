@@ -72,8 +72,7 @@
               <view class="d-item-top">
                 <text class="name">{{ item.name }}</text>
                 <view class="status-setting">
-                  <image class="status" src="@/static/images/3x/setting@3x.png">
-                  </image>
+                  <switch color="#0EEB92" style="transform: scale(0.5)" />
                   <image
                     class="setting"
                     src="@/static/images/3x/setting@3x.png"
@@ -257,6 +256,8 @@ const deviceList = ref([
               vertical-align: middle;
             }
             .status-setting {
+              display: flex;
+              align-items: center;
               .status {
                 width: 20px;
                 height: 20px;
