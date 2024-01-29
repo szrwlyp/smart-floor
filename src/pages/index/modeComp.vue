@@ -1,17 +1,18 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
+import { modeMap } from "@/modules/index";
 interface Props {
   modeType: number;
 }
 const props = defineProps<Props>();
 
 // mode 1：制冷，2：制热，3：通风，4：键盘上锁
-const modeMap = new Map([
-  [1, { mode_icon: "../../static/images/3x/xuehua@3x.png", text: "制冷模式" }],
-  [2, { mode_icon: "../../static/images/3x/zhire@3x.png", text: "制热模式" }],
-  [3, { mode_icon: "../../static/images/tongfeng.png", text: "通风模式" }],
-  [4, { mode_icon: "../../static/images/3x/suoding@3x.png", text: "键盘上锁" }],
-]);
+// const modeMap = new Map([
+//   [1, { mode_icon: "../../static/images/3x/xuehua@3x.png", text: "制冷模式" }],
+//   [2, { mode_icon: "../../static/images/3x/zhire@3x.png", text: "制热模式" }],
+//   [3, { mode_icon: "../../static/images/tongfeng.png", text: "通风模式" }],
+//   [4, { mode_icon: "../../static/images/3x/suoding@3x.png", text: "键盘上锁" }],
+// ]);
 
 interface Mode {
   mode_icon: string;

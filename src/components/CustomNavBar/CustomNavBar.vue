@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import type { Long } from "typeorm";
 import { ref, onMounted, reactive, useSlots } from "vue";
 
 const slots = useSlots();
@@ -14,6 +13,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   customNavBarStyle: "",
   mode: "includeMenu",
+  backgroundColor: "transparent",
 });
 
 // 状态栏高度

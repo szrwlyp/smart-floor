@@ -1,6 +1,7 @@
 <template>
   <view class="index">
-    <CustomNavBar>
+    <!-- #ifdef MP-WEIXIN -->
+    <CustomNavBar mode="includeMenu" :backgroundColor="customNavBarBg">
       <template #left>
         <view
           style="
@@ -19,6 +20,7 @@
         <view>智慧楼宇</view>
       </template> -->
     </CustomNavBar>
+    <!-- #endif -->
     <view class="bg-color"></view>
     <view class="top-right"></view>
     <view class="content">
@@ -74,6 +76,7 @@
                 <view class="status-setting">
                   <switch color="#0EEB92" style="transform: scale(0.5)" />
                   <image
+                    @click="openPopUp"
                     class="setting"
                     src="@/static/images/3x/setting@3x.png"
                   >
@@ -95,16 +98,77 @@
             </view>
           </template>
         </view>
-        <!-- <u-button>打开ActionSheet</u-button> -->
       </view>
     </view>
+    <u-popup
+      :show="showPopUp"
+      :round="16"
+      mode="bottom"
+      @close="closePopUp"
+      @open="openPopUp"
+    >
+      <view class="pop-setting">
+        <view class="header">
+          <text class="title"> 空调设置 </text>
+          <image
+            @click="closePopUp"
+            class="close-icon"
+            src="@/static/images/3x/close@3x.png"
+          >
+          </image>
+        </view>
+        <view class="current-wendu-status">
+          <text class="wendu">当前温度：24°C</text>
+          <switch color="#24B3BD" style="transform: scale(0.7)" />
+        </view>
+        <view class="gauge"></view>
+        <view class="setting-mode">
+          <template v-for="(item, key) of modeList" :key="key">
+            <view
+              class="setting-mode-item"
+              :class="{ 'setting-mode-item-selected': currentMode === key }"
+              @click="handleModeType(key)"
+            >
+              <image class="type-icon" :src="item.mode_icon"> </image>
+              <text class="type-text">{{ item.text }}</text>
+            </view>
+          </template>
+        </view>
+        <view class="wind-speed">
+          <template v-for="(item, key) of windSpeedList" :key="key">
+            <view
+              class="wind-speed-item"
+              :class="{ 'wind-speed-item-selected': currentWindSpeed === key }"
+              @click="handleWindSpeed(key)"
+            >
+              <image class="icon" :src="item.icon"> </image>
+              <text class="text">{{ item.text }}</text>
+            </view>
+          </template>
+        </view>
+        <view class="popup-submit" @click="handlePopUpSubmit">执行</view>
+      </view>
+    </u-popup>
+    <!-- <Charts :chartBaseOptions="chartBaseOptions"></Charts> -->
   </view>
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
+import { onPageScroll } from "@dcloudio/uni-app";
 import CustomNavBar from "@/components/CustomNavBar/CustomNavBar.vue";
+// import Charts from "@/components/eCharts/eCharts.vue";
 import modeComp from "./modeComp.vue";
+import { demo1, demo2 } from "@/modules/eCharts/demo";
+import type { chartBaseOptionsType } from "@/typings/eCharts";
+import { modeMap, windSpeed } from "@/modules/index";
+
+const chartBaseOptions = ref<chartBaseOptionsType>({
+  width: 500,
+  height: 500,
+  chartsId: "test",
+  setOptions: demo1,
+});
 
 // 设备类型
 const deviceType = ref([
@@ -147,6 +211,40 @@ const deviceList = ref([
   { name: "东侧空调", status: "on", mode: 1, temperature: 26 },
   { name: "东侧空调", status: "on", mode: 1, temperature: 28 },
 ]);
+
+// 底部弹出框Popup
+const showPopUp = ref(false);
+
+const modeList = ref([...modeMap.values()]);
+const windSpeedList = ref([...windSpeed.values()]);
+const currentMode = ref(0);
+const currentWindSpeed = ref(0);
+const handleModeType = (i: number) => {
+  currentMode.value = i;
+};
+const handleWindSpeed = (i: number) => {
+  currentWindSpeed.value = i;
+};
+const openPopUp = () => {
+  showPopUp.value = true;
+};
+const closePopUp = () => {
+  showPopUp.value = false;
+};
+const handlePopUpSubmit = () => {};
+
+onMounted(() => {});
+
+// #ifndef H5
+const customNavBarBg = ref("transparent");
+onPageScroll(({ scrollTop }) => {
+  if (scrollTop > 10) {
+    customNavBarBg.value = "#b0e8de";
+  } else {
+    customNavBarBg.value = "transparent";
+  }
+});
+// #endif
 </script>
 
 <style lang="scss" scoped>
@@ -295,6 +393,131 @@ const deviceList = ref([
           }
         }
       }
+    }
+  }
+  .pop-setting {
+    padding: 16px;
+    background: linear-gradient(180deg, #f5f9fa 0%, #ffffff 100%);
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      .title {
+        color: #222222;
+        font-size: 18px;
+        font-weight: 500;
+      }
+      .close-icon {
+        width: 20px;
+        height: 20px;
+      }
+    }
+    .current-wendu-status {
+      margin-top: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      .wendu {
+        color: #007c84;
+        font-size: 16px;
+        font-weight: 400;
+      }
+    }
+    .gauge {
+      margin: 24px auto;
+      width: 280px;
+      height: 280px;
+      border-radius: 50%;
+      background: linear-gradient(90deg, #f2f9fa 0%, #f7feff 100%);
+      box-shadow: 4px 4px 8px rgba(0, 118, 135, 0.05),
+        -4px -4px 10px rgba(255, 255, 255, 0.5),
+        6px 6px 20px rgba(0, 118, 135, 0.16);
+      border: 2px solid #ffffff;
+    }
+    .setting-mode {
+      /* width: 327px; */
+      height: 72px;
+      border-radius: 8px;
+      /* margin: 0 auto; */
+      background: linear-gradient(90deg, #f2f9fa 0%, #f7feff 100%);
+      box-shadow: 4px 4px 8px rgba(0, 118, 135, 0.05),
+        -4px -4px 10px rgba(255, 255, 255, 0.5),
+        6px 6px 20px rgba(0, 118, 135, 0.16);
+      border: 1px solid #ffffff;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+
+      .setting-mode-item {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        width: 72px;
+        height: 62px;
+        .type-icon {
+          width: 20px;
+          height: 20px;
+          margin-bottom: 4px;
+        }
+        .type-text {
+          color: #485161;
+          font-size: 14px;
+          font-weight: 400;
+        }
+      }
+
+      .setting-mode-item-selected {
+        background: rgba(43, 196, 184, 0.2);
+        border-radius: 8px;
+        .type-text {
+          color: #2bc4b8;
+        }
+      }
+    }
+    .wind-speed {
+      margin: 20px 0 38px 0;
+      display: flex;
+      justify-content: space-between;
+      .wind-speed-item {
+        width: 68px;
+        height: 72px;
+        background: linear-gradient(90deg, #f2f9fa 0%, #f7feff 100%);
+        box-shadow: 4px 4px 8px rgba(0, 118, 135, 0.05),
+          -4px -4px 10px rgba(255, 255, 255, 0.5),
+          6px 6px 20px rgba(0, 118, 135, 0.16);
+        border: 1px solid #ffffff;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        .icon {
+          width: 24px;
+          height: 24px;
+          margin-bottom: 4px;
+        }
+        .text {
+          color: #485161;
+          font-size: 14px;
+          font-weight: 400;
+        }
+      }
+      .wind-speed-item-selected {
+        background: linear-gradient(90deg, #bfdfe0 0%, #e6f7fa 100%);
+      }
+    }
+    .popup-submit {
+      width: 100%;
+      height: 40px;
+      border-radius: 6px;
+      background: #2bc4b8;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 400;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
   }
 }
