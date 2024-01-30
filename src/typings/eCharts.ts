@@ -5,8 +5,8 @@
  * @param chartsId 图表ID
  */
 export interface chartBaseOptionsType {
-  width?: number;
-  height?: number;
+  width?: string;
+  height?: string;
   chartsId: string;
   setOptions: object;
 }

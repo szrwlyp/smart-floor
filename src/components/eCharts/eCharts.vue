@@ -1,5 +1,14 @@
 <script setup lang="ts">
+import LEchart from "@/uni_modules/lime-echart/components/l-echart/l-echart.vue";
 import { ref, onMounted, toRefs, watch } from "vue";
+import type { chartBaseOptionsType } from "@/typings/eCharts";
+
+// #ifdef VUE3
+// #ifdef MP
+const echarts = require("../../uni_modules/lime-echart/static/echarts.min");
+// #endif
+
+// #ifdef WEB
 import * as echarts from "echarts/core";
 import {
   BarChart,
@@ -26,7 +35,6 @@ import {
 } from "echarts/components";
 import { LabelLayout, UniversalTransition } from "echarts/features";
 import { CanvasRenderer } from "echarts/renderers";
-import type { chartBaseOptionsType } from "@/typings/eCharts";
 
 // 通过 ComposeOption 来组合出一个只有必须组件和图表的 Option 类型
 type ECOption = echarts.ComposeOption<
@@ -53,6 +61,8 @@ echarts.use([
   LegendComponent,
   ToolboxComponent,
 ]);
+// #endif
+// #endif
 
 /**
  * Props
@@ -65,7 +75,12 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   chartBaseOptions: () => {
-    return { width: 300, height: 300, chartsId: "test", setOptions: {} };
+    return {
+      width: "300px",
+      height: "300px",
+      chartsId: "test",
+      setOptions: {},
+    };
   },
 });
 
@@ -73,46 +88,39 @@ let { width, height, chartsId } = toRefs<chartBaseOptionsType>(
   props.chartBaseOptions
 );
 
-console.log(props);
-console.log(width, height);
-
 // 监听setOptions并更新
 watch(
   () => props.chartBaseOptions.setOptions,
   (newValue, oldValue) => {
     console.log(newValue);
-    initChart();
+    initWebChart();
   },
   { deep: true }
 );
 
 // 初始化图表
-const charts = ref<any>(null);
-const testRef = ref(null);
-const initChart = () => {
-  charts.value = echarts.init(testRef.value);
-  console.log("ccc", charts.value);
-  // charts.value = echarts.init(
-  //   document.getElementById(chartsId.value) as HTMLElement
-  // );
-  charts.value.setOption(props.chartBaseOptions.setOptions);
+const chartRef = ref<any>(null);
+const initWebChart = async () => {
+  if (!chartRef.value) return;
+  const myChart = await chartRef.value.init(echarts);
+  myChart.setOption(props.chartBaseOptions.setOptions);
+  // 组件能被调用必须是组件的节点已经被渲染到页面上
+  // setTimeout(async () => {
+  //   if (!chartRef.value) return;
+  //   const myChart = await chartRef.value.init(echarts);
+  //   myChart.setOption(props.chartBaseOptions.setOptions);
+  // }, 300);
 };
 
 onMounted(() => {
-  // console.log(testRef.value);
-  initChart();
+  initWebChart();
 });
 </script>
 
 <template>
-  <view
-    ref="testRef"
-    :style="{ width: width + 'px', height: height + 'px' }"
-    class="charts"
+  <view :style="{ width: width, height: height }"
+    ><LEchart ref="chartRef"></LEchart
   ></view>
 </template>
 
-<style lang="scss" scoped>
-.charts {
-}
-</style>
+<style lang="scss" scoped></style>

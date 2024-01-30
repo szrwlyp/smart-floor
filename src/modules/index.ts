@@ -1,9 +1,22 @@
 // mode 1：制冷，2：制热，3：通风，4：键盘上锁
 export const modeMap = new Map([
-  [1, { mode_icon: "/static/images/3x/xuehua@3x.png", text: "制冷模式" }],
-  [2, { mode_icon: "/static/images/3x/zhire@3x.png", text: "制热模式" }],
-  [3, { mode_icon: "/static/images/zidong.png", text: "通风模式" }],
-  [4, { mode_icon: "/static/images/3x/suoding@3x.png", text: "键盘上锁" }],
+  [
+    1,
+    { mode_icon: "/static/images/3x/xuehua@3x.png", text: "制冷模式", mode: 1 },
+  ],
+  [
+    2,
+    { mode_icon: "/static/images/3x/zhire@3x.png", text: "制热模式", mode: 2 },
+  ],
+  [3, { mode_icon: "/static/images/zidong.png", text: "通风模式", mode: 3 }],
+  [
+    4,
+    {
+      mode_icon: "/static/images/3x/suoding@3x.png",
+      text: "键盘上锁",
+      mode: 4,
+    },
+  ],
 ]);
 
 export const windSpeed = new Map([

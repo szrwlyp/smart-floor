@@ -1,6 +1,6 @@
 <template>
   <view class="index">
-    <!-- #ifdef MP-WEIXIN -->
+    <!-- #ifdef MP -->
     <CustomNavBar mode="includeMenu" :backgroundColor="customNavBarBg">
       <template #left>
         <view
@@ -31,13 +31,13 @@
             :class="{ 'device-selected': index === currentDevice }"
             @click="handleDeviceSelected(index)"
           >
-            <text>{{ item.title }}</text>
-            <!-- <image
-            style="width: 12px; height: 5px"
-            src="@/static/xuanzhong.svg"
-          ></image> -->
-          </view></template
-        >
+            <view>{{ item.title }}</view>
+            <image
+              v-if="index === currentDevice"
+              style="width: 16px; height: 7px; position: absolute; bottom: -6px"
+              src="@/static/images/xuanzhong.svg"
+            ></image> </view
+        ></template>
       </view>
       <view class="device-content">
         <view class="floor">
@@ -51,7 +51,7 @@
           >
         </view>
         <view class="operation">
-          <view class="o-item">
+          <view class="o-item" @click="easyShuttleDevices('openAll')">
             <image
               class="o-item-image"
               src="@/static/images/3x/kongtiao@3x.png"
@@ -59,7 +59,7 @@
             </image>
             <text class="o-item-text">一键开启全部</text>
           </view>
-          <view class="o-item">
+          <view class="o-item" @click="easyShuttleDevices('closeAll')">
             <image
               class="o-item-image"
               src="@/static/images/3x/yijianguanbi@3x.png"
@@ -74,9 +74,13 @@
               <view class="d-item-top">
                 <text class="name">{{ item.name }}</text>
                 <view class="status-setting">
-                  <switch color="#0EEB92" style="transform: scale(0.5)" />
+                  <!-- <switch color="#0EEB92" style="transform: scale(0.5)" /> -->
+                  <customSwitch
+                    v-model="item.status"
+                    @change="handleSwitchChange"
+                  ></customSwitch>
                   <image
-                    @click="openPopUp"
+                    @click="openPopUp(item, index)"
                     class="setting"
                     src="@/static/images/3x/setting@3x.png"
                   >
@@ -100,13 +104,7 @@
         </view>
       </view>
     </view>
-    <u-popup
-      :show="showPopUp"
-      :round="16"
-      mode="bottom"
-      @close="closePopUp"
-      @open="openPopUp"
-    >
+    <u-popup :show="showPopUp" :round="16" mode="bottom">
       <view class="pop-setting">
         <view class="header">
           <text class="title"> 空调设置 </text>
@@ -118,16 +116,21 @@
           </image>
         </view>
         <view class="current-wendu-status">
-          <text class="wendu">当前温度：24°C</text>
-          <switch color="#24B3BD" style="transform: scale(0.7)" />
+          <text class="wendu">当前温度：{{ popUpValue.temperature }}°C</text>
+          <customTextSwitch
+            v-model="popUpValue.status"
+            @change="handleSwitchChange"
+          ></customTextSwitch>
         </view>
         <view class="gauge"></view>
         <view class="setting-mode">
           <template v-for="(item, key) of modeList" :key="key">
             <view
               class="setting-mode-item"
-              :class="{ 'setting-mode-item-selected': currentMode === key }"
-              @click="handleModeType(key)"
+              :class="{
+                'setting-mode-item-selected': popUpValue.mode === item.mode,
+              }"
+              @click="handleModeType(item.mode)"
             >
               <image class="type-icon" :src="item.mode_icon"> </image>
               <text class="type-text">{{ item.text }}</text>
@@ -138,7 +141,9 @@
           <template v-for="(item, key) of windSpeedList" :key="key">
             <view
               class="wind-speed-item"
-              :class="{ 'wind-speed-item-selected': currentWindSpeed === key }"
+              :class="{
+                'wind-speed-item-selected': popUpValue.windSpeed === key,
+              }"
               @click="handleWindSpeed(key)"
             >
               <image class="icon" :src="item.icon"> </image>
@@ -149,7 +154,9 @@
         <view class="popup-submit" @click="handlePopUpSubmit">执行</view>
       </view>
     </u-popup>
-    <!-- <Charts :chartBaseOptions="chartBaseOptions"></Charts> -->
+
+    <Charts :chartBaseOptions="chartBaseOptions"></Charts>
+    <Charts :chartBaseOptions="chartBaseOptions1"></Charts>
   </view>
 </template>
 
@@ -157,17 +164,25 @@
 import { ref, onMounted } from "vue";
 import { onPageScroll } from "@dcloudio/uni-app";
 import CustomNavBar from "@/components/CustomNavBar/CustomNavBar.vue";
-// import Charts from "@/components/eCharts/eCharts.vue";
 import modeComp from "./modeComp.vue";
+import { modeMap, windSpeed } from "@/modules/index";
+import customTextSwitch from "@/components/customTextSwitch/customTextSwitch.vue";
+import customSwitch from "@/components/customSwitch/customSwitch.vue";
+import Charts from "@/components/eCharts/eCharts.vue";
 import { demo1, demo2 } from "@/modules/eCharts/demo";
 import type { chartBaseOptionsType } from "@/typings/eCharts";
-import { modeMap, windSpeed } from "@/modules/index";
 
 const chartBaseOptions = ref<chartBaseOptionsType>({
-  width: 500,
-  height: 500,
+  width: "750rpx",
+  height: "500rpx",
   chartsId: "test",
-  setOptions: demo1,
+  setOptions: demo2,
+});
+const chartBaseOptions1 = ref<chartBaseOptionsType>({
+  width: "750rpx",
+  height: "500rpx",
+  chartsId: "test",
+  setOptions: demo2,
 });
 
 // 设备类型
@@ -199,52 +214,133 @@ const handleFloorSelected = (value: string | number) => {
   console.log(value);
   currentFloor.value = value;
 };
+// 一键开启全部
+const easyShuttleDevices = (value: string) => {
+  deviceList.value = deviceList.value.map((item) => {
+    value === "openAll" ? (item.status = true) : (item.status = false);
+    return item;
+  });
+};
 
 // 设备列表
 // mode 1：制冷，2：制热，3：通风，4：键盘上锁
-const deviceList = ref([
-  { name: "东侧空调", status: "on", mode: 1, temperature: 24 },
-  { name: "东侧空调", status: "on", mode: 3, temperature: 21 },
-  { name: "东侧空调", status: "on", mode: 4, temperature: 24 },
-  { name: "东侧空调", status: "on", mode: 2, temperature: 14 },
-  { name: "东侧空调", status: "on", mode: 1, temperature: 30 },
-  { name: "东侧空调", status: "on", mode: 1, temperature: 26 },
-  { name: "东侧空调", status: "on", mode: 1, temperature: 28 },
+interface IDeviceList {
+  name: string;
+  status: boolean;
+  mode: number;
+  temperature: number;
+}
+const deviceList = ref<Array<IDeviceList>>([
+  { name: "东侧空调", status: false, mode: 1, temperature: 24 },
+  { name: "东侧空调", status: true, mode: 3, temperature: 21 },
+  { name: "东侧空调", status: true, mode: 4, temperature: 24 },
+  { name: "东侧空调", status: false, mode: 2, temperature: 14 },
+  { name: "东侧空调", status: true, mode: 1, temperature: 30 },
+  { name: "东侧空调", status: true, mode: 1, temperature: 26 },
+  { name: "东侧空调", status: false, mode: 1, temperature: 28 },
 ]);
 
 // 底部弹出框Popup
 const showPopUp = ref(false);
-
 const modeList = ref([...modeMap.values()]);
 const windSpeedList = ref([...windSpeed.values()]);
-const currentMode = ref(0);
-const currentWindSpeed = ref(0);
+const listCurrentIndex = ref(0);
+interface PopUpValue {
+  name: string;
+  status: boolean;
+  windSpeed?: number;
+  mode: number;
+  temperature: number;
+}
+const popUpValue = ref<PopUpValue>({
+  name: "",
+  status: true,
+  windSpeed: 0,
+  mode: 1,
+  temperature: 1,
+});
 const handleModeType = (i: number) => {
-  currentMode.value = i;
+  popUpValue.value.mode = i;
 };
 const handleWindSpeed = (i: number) => {
-  currentWindSpeed.value = i;
+  popUpValue.value.windSpeed = i;
 };
-const openPopUp = () => {
+const openPopUp = (item: IDeviceList, index: number) => {
   showPopUp.value = true;
+
+  console.log(item);
+  popUpValue.value = { ...popUpValue.value, ...item };
+  listCurrentIndex.value = index;
 };
 const closePopUp = () => {
   showPopUp.value = false;
 };
-const handlePopUpSubmit = () => {};
+const handlePopUpSubmit = () => {
+  let data = Object.assign({}, popUpValue.value);
 
-onMounted(() => {});
+  delete data.windSpeed;
+  console.log(data);
+  deviceList.value.splice(listCurrentIndex.value, 1, data);
+  closePopUp();
+};
 
-// #ifndef H5
+onMounted(() => {
+  setTimeout(() => {
+    chartBaseOptions.value.setOptions = {
+      title: {
+        text: "ECharts 入门示例111",
+      },
+      tooltip: {},
+      xAxis: {
+        data: ["衬衫", "羊毛衫", "雪纺衫", "裤子", "高跟鞋", "袜子"],
+      },
+      yAxis: {},
+      series: [
+        {
+          name: "销量",
+          type: "bar",
+          data: [25, 40, 56, 17, 7, 20],
+        },
+      ],
+    };
+  }, 3000);
+  setTimeout(() => {
+    chartBaseOptions1.value.setOptions = {
+      title: {
+        text: "ECharts 入门示例111",
+      },
+      tooltip: {},
+      xAxis: {
+        data: ["衬衫", "羊毛衫", "雪纺衫", "裤子", "高跟鞋", "袜子"],
+      },
+      yAxis: {},
+      series: [
+        {
+          name: "销量",
+          type: "bar",
+          data: [40, 400, 560, 170, 70, 20],
+        },
+      ],
+    };
+  }, 5000);
+});
+
+// #ifdef MP
 const customNavBarBg = ref("transparent");
 onPageScroll(({ scrollTop }) => {
   if (scrollTop > 10) {
     customNavBarBg.value = "#b0e8de";
+    // customNavBarBg.value = "#2BC4B8";
   } else {
     customNavBarBg.value = "transparent";
   }
 });
 // #endif
+
+const handleSwitchChange = (v: boolean) => {
+  console.log(v);
+  console.log(deviceList.value);
+};
 </script>
 
 <style lang="scss" scoped>
@@ -264,7 +360,7 @@ onPageScroll(({ scrollTop }) => {
   .top-right {
     width: 240px;
     height: 240px;
-    background: #85e0ff;
+    background: rgba(133, 224, 255, 0.7);
     position: absolute;
     top: -75px;
     left: 212px;
@@ -282,11 +378,13 @@ onPageScroll(({ scrollTop }) => {
         font-weight: 400;
         text-align: center;
         margin-right: 24px;
+        display: flex;
+        justify-content: center;
+        position: relative;
       }
       .device-selected {
         color: #000;
         font-weight: 500;
-        position: relative;
       }
     }
 
@@ -363,6 +461,7 @@ onPageScroll(({ scrollTop }) => {
               .setting {
                 width: 20px;
                 height: 20px;
+                margin-left: 14px;
               }
             }
           }
@@ -425,8 +524,10 @@ onPageScroll(({ scrollTop }) => {
     }
     .gauge {
       margin: 24px auto;
-      width: 280px;
-      height: 280px;
+      /* width: 280px;
+      height: 280px; */
+      width: 200px;
+      height: 200px;
       border-radius: 50%;
       background: linear-gradient(90deg, #f2f9fa 0%, #f7feff 100%);
       box-shadow: 4px 4px 8px rgba(0, 118, 135, 0.05),
