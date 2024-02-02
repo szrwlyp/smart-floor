@@ -9,13 +9,14 @@ const echarts = require("../../uni_modules/lime-echart/static/echarts.min");
 // #endif
 
 // #ifdef WEB
-import * as echarts from "echarts/core";
+import * as echarts from "echarts";
 import {
   BarChart,
   // 系列类型的定义后缀都为 SeriesOption
   BarSeriesOption,
   LineChart,
   LineSeriesOption,
+  GaugeChart,
 } from "echarts/charts";
 import {
   TitleComponent,
@@ -60,6 +61,7 @@ echarts.use([
   CanvasRenderer,
   LegendComponent,
   ToolboxComponent,
+  GaugeChart,
 ]);
 // #endif
 // #endif
@@ -76,8 +78,8 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   chartBaseOptions: () => {
     return {
-      width: "300px",
-      height: "300px",
+      width: "200px",
+      height: "200px",
       chartsId: "test",
       setOptions: {},
     };
@@ -102,14 +104,14 @@ watch(
 const chartRef = ref<any>(null);
 const initWebChart = async () => {
   if (!chartRef.value) return;
-  const myChart = await chartRef.value.init(echarts);
-  myChart.setOption(props.chartBaseOptions.setOptions);
+  // const myChart = await chartRef.value.init(echarts);
+  // myChart.setOption(props.chartBaseOptions.setOptions);
   // 组件能被调用必须是组件的节点已经被渲染到页面上
-  // setTimeout(async () => {
-  //   if (!chartRef.value) return;
-  //   const myChart = await chartRef.value.init(echarts);
-  //   myChart.setOption(props.chartBaseOptions.setOptions);
-  // }, 300);
+  setTimeout(async () => {
+    if (!chartRef.value) return;
+    const myChart = await chartRef.value.init(echarts);
+    myChart.setOption(props.chartBaseOptions.setOptions);
+  }, 300);
 };
 
 onMounted(() => {

@@ -1,5 +1,5 @@
 <template>
-  <view class="index">
+  <view class="index" :class="{ tet: showPopUp }">
     <!-- #ifdef MP -->
     <CustomNavBar mode="includeMenu" :backgroundColor="customNavBarBg">
       <template #left>
@@ -28,12 +28,12 @@
         <template v-for="(item, index) in deviceType" :key="index">
           <view
             class="device-type-item"
-            :class="{ 'device-selected': index === currentDevice }"
-            @click="handleDeviceSelected(index)"
+            :class="{ 'device-selected': item.type === currentDevice }"
+            @click="handleDeviceSelected(item.type)"
           >
             <view>{{ item.title }}</view>
             <image
-              v-if="index === currentDevice"
+              v-if="item.type === currentDevice"
               style="width: 16px; height: 7px; position: absolute; bottom: -6px"
               src="@/static/images/xuanzhong.svg"
             ></image> </view
@@ -50,25 +50,27 @@
             ></template
           >
         </view>
-        <view class="operation">
-          <view class="o-item" @click="easyShuttleDevices('openAll')">
-            <image
-              class="o-item-image"
-              src="@/static/images/3x/kongtiao@3x.png"
-            >
-            </image>
-            <text class="o-item-text">一键开启全部</text>
+
+        <!-- 空调 -->
+        <view v-show="currentDevice === 'kongtiao'" class="device-list">
+          <view class="operation">
+            <view class="o-item" @click="easyShuttleDevices('openAll')">
+              <image
+                class="o-item-image"
+                src="@/static/images/3x/kongtiao@3x.png"
+              >
+              </image>
+              <text class="o-item-text">一键开启全部</text>
+            </view>
+            <view class="o-item" @click="easyShuttleDevices('closeAll')">
+              <image
+                class="o-item-image"
+                src="@/static/images/3x/yijianguanbi@3x.png"
+              >
+              </image>
+              <text class="o-item-text">一键关闭全部</text>
+            </view>
           </view>
-          <view class="o-item" @click="easyShuttleDevices('closeAll')">
-            <image
-              class="o-item-image"
-              src="@/static/images/3x/yijianguanbi@3x.png"
-            >
-            </image>
-            <text class="o-item-text">一键关闭全部</text>
-          </view>
-        </view>
-        <view class="device-list">
           <template v-for="(item, index) in deviceList" :key="index">
             <view class="d-item">
               <view class="d-item-top">
@@ -102,10 +104,70 @@
             </view>
           </template>
         </view>
+
+        <!-- 能耗 -->
+        <view v-show="currentDevice === 'nenghao'" class="nenghao">
+          <view class="overview">
+            <view class="titile">能耗总览</view>
+            <view class="value">
+              <view class="measure">
+                <view class="measure-kw">
+                  <text>235</text>
+                  <text>kw</text>
+                </view>
+                <view class="measure-label">日用电量</view>
+              </view>
+              <view class="measure">
+                <view class="measure-kw">
+                  <text>235</text>
+                  <text>kw</text>
+                </view>
+                <view class="measure-label">月用电量</view>
+              </view>
+              <view class="measure">
+                <view class="measure-kw">
+                  <text>235</text>
+                  <text>kw</text>
+                </view>
+                <view class="measure-label">年用电量</view>
+              </view>
+            </view>
+          </view>
+          <view class="curve-echart">
+            <view class="t">
+              <view class="title">本月用电曲线</view>
+              <view class="month">
+                <view>本月</view>
+              </view></view
+            >
+            <Charts :chartBaseOptions="quxian"></Charts>
+          </view>
+          <view class="curve-echart">
+            <view class="t">
+              <view class="title">电表用电量</view>
+              <view class="month">
+                <view>本月</view>
+              </view></view
+            >
+            <template v-for="(item, index) of companyDosage" :key="index">
+              <view class="company-dosage">
+                <view class="name">
+                  <text>{{ item.companyName }}</text>
+                  <text>{{ item.dosage }}kw</text>
+                </view>
+                <u-line-progress
+                  :percentage="30"
+                  :showText="false"
+                  height="8"
+                  activeColor="#2BC4B8"
+                ></u-line-progress> </view
+            ></template>
+          </view>
+        </view>
       </view>
     </view>
-    <u-popup :show="showPopUp" :round="16" mode="bottom">
-      <view class="pop-setting">
+    <MyPopUp :showPopUp="showPopUp" @close="closePopUp" @open="open">
+      <view class="pop-setting" v-if="showPopUp">
         <view class="header">
           <text class="title"> 空调设置 </text>
           <image
@@ -122,7 +184,16 @@
             @change="handleSwitchChange"
           ></customTextSwitch>
         </view>
-        <view class="gauge"></view>
+        <view class="gauge">
+          <Charts :chartBaseOptions="wenduGauge"></Charts>
+          <view @click="handlerHeat('jia')" class="heat_operation jia">
+            <text class="line-x"></text>
+            <text class="line-y"></text>
+          </view>
+          <view @click="handlerHeat('jian')" class="heat_operation jian">
+            <text class="line-x"></text>
+          </view>
+        </view>
         <view class="setting-mode">
           <template v-for="(item, key) of modeList" :key="key">
             <view
@@ -153,24 +224,34 @@
         </view>
         <view class="popup-submit" @click="handlePopUpSubmit">执行</view>
       </view>
-    </u-popup>
-
-    <Charts :chartBaseOptions="chartBaseOptions"></Charts>
-    <Charts :chartBaseOptions="chartBaseOptions1"></Charts>
+    </MyPopUp>
+    <!-- <Charts :chartBaseOptions="wenduGauge"></Charts> -->
+    <!-- <Charts :chartBaseOptions="wenduGauge"></Charts>
+    <Charts :chartBaseOptions="chartBaseOptions1"></Charts> -->
   </view>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
+import { storeToRefs } from "pinia";
 import { onPageScroll } from "@dcloudio/uni-app";
 import CustomNavBar from "@/components/CustomNavBar/CustomNavBar.vue";
 import modeComp from "./modeComp.vue";
 import { modeMap, windSpeed } from "@/modules/index";
+
 import customTextSwitch from "@/components/customTextSwitch/customTextSwitch.vue";
 import customSwitch from "@/components/customSwitch/customSwitch.vue";
 import Charts from "@/components/eCharts/eCharts.vue";
 import { demo1, demo2 } from "@/modules/eCharts/demo";
 import type { chartBaseOptionsType } from "@/typings/eCharts";
+import { nenghaoOptions } from "@/modules/eCharts/index";
+import MyPopUp from "@/components/myPopUp/myPopUp.vue";
+
+import { useGaugeStore } from "@/stores/utils";
+const { currentValueEndAngle, currentSplitNumber } = storeToRefs(
+  useGaugeStore()
+);
+const gaugeStore = useGaugeStore();
 
 const chartBaseOptions = ref<chartBaseOptionsType>({
   width: "750rpx",
@@ -179,24 +260,138 @@ const chartBaseOptions = ref<chartBaseOptionsType>({
   setOptions: demo2,
 });
 const chartBaseOptions1 = ref<chartBaseOptionsType>({
-  width: "750rpx",
-  height: "500rpx",
+  width: "622rpx",
+  height: "400rpx",
   chartsId: "test",
   setOptions: demo2,
 });
 
+const wenduGauge = ref<chartBaseOptionsType>({
+  width: "200px",
+  height: "200px",
+  chartsId: "test",
+  setOptions: {
+    graphic: [
+      {
+        type: "text",
+        left: 20,
+        top: 170,
+        scaleX: 1.4,
+        scaleY: 1.4,
+        style: {
+          text: gaugeStore.minHeat + "°C",
+          fill: "#007C84",
+        },
+      },
+      {
+        type: "text",
+        left: 155,
+        top: 170,
+        scaleX: 1.4,
+        scaleY: 1.4,
+        style: {
+          text: gaugeStore.maxHeat + "°C",
+          fill: "#007C84",
+        },
+      },
+      {
+        type: "text",
+        x: 120,
+        y: 84,
+        scaleX: 1.3,
+        scaleY: 1.3,
+        style: {
+          text: "°C",
+          fill: "#007C84",
+        },
+      },
+    ],
+    series: [],
+  },
+});
+
+const setGaugeOption = () => {
+  const dataArr = [
+    {
+      type: "gauge",
+      radius: "90%",
+      splitNumber: 1,
+      axisLine: {
+        show: true,
+        lineStyle: {
+          width: 1,
+          opacity: 1,
+          color: [[1, "#007C84"]],
+        },
+      },
+      startAngle: gaugeStore.startAngle,
+      endAngle: gaugeStore.endAngle,
+      title: { show: false },
+      detail: { show: false },
+      splitLine: { show: false },
+      axisTick: {
+        length: 10,
+        splitNumber: 60,
+        lineStyle: {
+          color: "rgba(0, 118, 135, 0.2)",
+          width: 2,
+        },
+      },
+      axisLabel: { show: false },
+      pointer: { show: false },
+      itemStyle: {},
+    },
+    {
+      type: "gauge",
+      radius: "90%",
+      splitNumber: currentSplitNumber.value ? 1 : 0,
+      axisLine: {
+        show: false,
+        lineStyle: {
+          width: 0,
+          opacity: 0,
+        },
+      },
+      startAngle: gaugeStore.startAngle,
+      endAngle: gaugeStore.getValueEndAngle(),
+      title: { show: false },
+      detail: {
+        show: true,
+        offsetCenter: [0, 0],
+        color: "#00495F",
+        fontSize: 34,
+      },
+      splitLine: { show: false },
+      axisTick: {
+        length: 11,
+        splitNumber: currentSplitNumber.value,
+        lineStyle: {
+          color: "#23BAC4",
+          width: 2,
+        },
+      },
+      axisLabel: { show: false },
+      pointer: { show: false },
+      itemStyle: {},
+
+      data: [{ value: popUpValue.value.temperature }],
+    },
+  ];
+  wenduGauge.value.setOptions.series = dataArr;
+};
+
 // 设备类型
 const deviceType = ref([
-  { title: "空调" },
-  { title: "能耗" },
-  { title: "灯光" },
-  { title: "风机" },
-  { title: "门禁" },
-  { title: "视频" },
+  { title: "空调", type: "kongtiao" },
+  { title: "能耗", type: "nenghao" },
+  { title: "灯光", type: "dengguang" },
+  { title: "风机", type: "fengji" },
+  { title: "门禁", type: "menjin" },
+  { title: "视频", type: "shipin" },
 ]);
-const currentDevice = ref(0);
-const handleDeviceSelected = (index: number) => {
-  currentDevice.value = index;
+const currentDevice = ref("nenghao");
+const handleDeviceSelected = (type: string) => {
+  currentDevice.value = type;
 };
 
 // 楼层
@@ -237,7 +432,7 @@ const deviceList = ref<Array<IDeviceList>>([
   { name: "东侧空调", status: false, mode: 2, temperature: 14 },
   { name: "东侧空调", status: true, mode: 1, temperature: 30 },
   { name: "东侧空调", status: true, mode: 1, temperature: 26 },
-  { name: "东侧空调", status: false, mode: 1, temperature: 28 },
+  { name: "东侧空调", status: false, mode: 1, temperature: 32 },
 ]);
 
 // 底部弹出框Popup
@@ -257,7 +452,7 @@ const popUpValue = ref<PopUpValue>({
   status: true,
   windSpeed: 0,
   mode: 1,
-  temperature: 1,
+  temperature: 24,
 });
 const handleModeType = (i: number) => {
   popUpValue.value.mode = i;
@@ -265,6 +460,7 @@ const handleModeType = (i: number) => {
 const handleWindSpeed = (i: number) => {
   popUpValue.value.windSpeed = i;
 };
+
 const openPopUp = (item: IDeviceList, index: number) => {
   showPopUp.value = true;
 
@@ -274,6 +470,25 @@ const openPopUp = (item: IDeviceList, index: number) => {
 };
 const closePopUp = () => {
   showPopUp.value = false;
+};
+
+const handlerHeat = (type: string) => {
+  console.log(popUpValue.value.temperature);
+
+  let count =
+    type === "jia"
+      ? popUpValue.value.temperature + 1
+      : popUpValue.value.temperature - 1;
+  console.log(count);
+  if (count >= 16 && count <= 31) {
+    popUpValue.value.temperature = count;
+
+    open();
+  }
+};
+const open = () => {
+  gaugeStore.setCurrentValue(popUpValue.value.temperature);
+  setGaugeOption();
 };
 const handlePopUpSubmit = () => {
   let data = Object.assign({}, popUpValue.value);
@@ -285,44 +500,7 @@ const handlePopUpSubmit = () => {
 };
 
 onMounted(() => {
-  setTimeout(() => {
-    chartBaseOptions.value.setOptions = {
-      title: {
-        text: "ECharts 入门示例111",
-      },
-      tooltip: {},
-      xAxis: {
-        data: ["衬衫", "羊毛衫", "雪纺衫", "裤子", "高跟鞋", "袜子"],
-      },
-      yAxis: {},
-      series: [
-        {
-          name: "销量",
-          type: "bar",
-          data: [25, 40, 56, 17, 7, 20],
-        },
-      ],
-    };
-  }, 3000);
-  setTimeout(() => {
-    chartBaseOptions1.value.setOptions = {
-      title: {
-        text: "ECharts 入门示例111",
-      },
-      tooltip: {},
-      xAxis: {
-        data: ["衬衫", "羊毛衫", "雪纺衫", "裤子", "高跟鞋", "袜子"],
-      },
-      yAxis: {},
-      series: [
-        {
-          name: "销量",
-          type: "bar",
-          data: [40, 400, 560, 170, 70, 20],
-        },
-      ],
-    };
-  }, 5000);
+  setGaugeOption();
 });
 
 // #ifdef MP
@@ -341,6 +519,49 @@ const handleSwitchChange = (v: boolean) => {
   console.log(v);
   console.log(deviceList.value);
 };
+
+/*******************************************************能耗***************************************************/
+const quxian = ref<chartBaseOptionsType>({
+  width: "622rpx",
+  height: "400rpx",
+  chartsId: "test",
+  setOptions: nenghaoOptions,
+});
+
+const companyDosage = ref([
+  {
+    companyName: "掌舵科技有限公司",
+    dosage: 454,
+  },
+  {
+    companyName: "掌舵科技有限公司",
+    dosage: 200,
+  },
+  {
+    companyName: "掌舵科技有限公司",
+    dosage: 150,
+  },
+  {
+    companyName: "掌舵科技有限公司",
+    dosage: 600,
+  },
+  {
+    companyName: "掌舵科技有限公司",
+    dosage: 1030,
+  },
+  {
+    companyName: "掌舵科技有限公司",
+    dosage: 454,
+  },
+  {
+    companyName: "掌舵科技有限公司",
+    dosage: 410,
+  },
+  {
+    companyName: "掌舵科技有限公司",
+    dosage: 803,
+  },
+]);
 </script>
 
 <style lang="scss" scoped>
@@ -417,28 +638,28 @@ const handleSwitchChange = (v: boolean) => {
         }
       }
 
-      .operation {
-        padding: 20px 0;
-        display: flex;
-        justify-content: space-evenly;
-        border-bottom: 1px solid #f0f0f0;
-        .o-item {
+      .device-list {
+        .operation {
+          padding: 20px 0;
           display: flex;
-          align-items: center;
-          flex-direction: column;
-          .o-item-image {
-            width: 20px;
-            height: 20px;
-          }
-          .o-item-text {
-            margin-top: 4px;
-            color: #1c2533;
-            font-size: 12px;
-            font-weight: 400;
+          justify-content: space-evenly;
+          border-bottom: 1px solid #f0f0f0;
+          .o-item {
+            display: flex;
+            align-items: center;
+            flex-direction: column;
+            .o-item-image {
+              width: 20px;
+              height: 20px;
+            }
+            .o-item-text {
+              margin-top: 4px;
+              color: #1c2533;
+              font-size: 12px;
+              font-weight: 400;
+            }
           }
         }
-      }
-      .device-list {
         .d-item {
           padding: 16px 0;
           border-bottom: 1px solid #f0f0f0;
@@ -492,15 +713,99 @@ const handleSwitchChange = (v: boolean) => {
           }
         }
       }
+
+      .nenghao {
+        .overview {
+          /* height: 110px; */
+          margin-top: 16px;
+          padding: 16px 12px;
+          background: url("@/static/images/3x/nenghao_bg@3x.png") no-repeat;
+          background-size: 100%;
+          .titile {
+            color: #324761;
+            font-size: 14px;
+            font-weight: 500;
+          }
+          .value {
+            margin-top: 12px;
+            display: flex;
+            justify-content: space-around;
+            .measure {
+              .measure-kw {
+                text:nth-child(1) {
+                  color: #00ba82;
+                  font-size: 16px;
+                  font-weight: 500;
+                }
+                text:nth-child(2) {
+                  font-size: 12px;
+                  color: #91969e;
+                  font-weight: 400;
+                  margin-left: 3px;
+                }
+              }
+              .measure-label {
+                font-size: 12px;
+                font-weight: 400;
+                color: #535a66;
+                margin-top: 6px;
+              }
+            }
+          }
+        }
+        .curve-echart {
+          margin-top: 16px;
+          .t {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 14px;
+            align-items: center;
+
+            .title {
+              font-size: 16px;
+              font-weight: 500;
+              color: #000;
+            }
+            .month {
+              width: 80px;
+              height: 32px;
+              border-radius: 4px;
+              background: #ffffff;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              border: 1px solid #f0f0f0;
+            }
+          }
+          .company-dosage {
+            margin-bottom: 16px;
+            .name {
+              color: #7f8694;
+              font-size: 14px;
+              display: flex;
+              justify-content: space-between;
+              margin-bottom: 8px;
+              /* text:nth-child(1){} */
+            }
+          }
+        }
+      }
     }
   }
   .pop-setting {
     padding: 16px;
+    /* #ifdef H5 */
+    padding: 16px 16px 70px 16px;
+    /* #endif */
+
     background: linear-gradient(180deg, #f5f9fa 0%, #ffffff 100%);
+    /* position: relative; */
     .header {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      /* position: fixed;
+      top: 0; */
       .title {
         color: #222222;
         font-size: 18px;
@@ -524,16 +829,60 @@ const handleSwitchChange = (v: boolean) => {
     }
     .gauge {
       margin: 24px auto;
-      /* width: 280px;
-      height: 280px; */
-      width: 200px;
-      height: 200px;
+      width: 280px;
+      height: 280px;
+      /* width: 200px;
+      height: 200px; */
       border-radius: 50%;
       background: linear-gradient(90deg, #f2f9fa 0%, #f7feff 100%);
       box-shadow: 4px 4px 8px rgba(0, 118, 135, 0.05),
         -4px -4px 10px rgba(255, 255, 255, 0.5),
         6px 6px 20px rgba(0, 118, 135, 0.16);
       border: 2px solid #ffffff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      .jia {
+        top: 217px;
+        left: 104px;
+      }
+      .jian {
+        top: 217px;
+        left: 150px;
+      }
+      .heat_operation {
+        width: 32px;
+        height: 32px;
+        position: absolute;
+
+        background: rgba(250, 252, 252, 1);
+
+        border: 1px solid rgba(255, 255, 255, 1);
+
+        box-shadow: 4px 4px 10px rgba(0, 118, 135, 0.05),
+          -4px -4px 13px rgba(255, 255, 255, 0.5),
+          6px 6px 30px rgba(0, 118, 135, 0.1);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        /* font-size: 25px;
+        color: #007c84; */
+        z-index: 10;
+        .line-x {
+          width: 12px;
+          height: 0;
+          border: 1px solid #007c84;
+        }
+        .line-y {
+          position: absolute;
+          width: 12px;
+          height: 0;
+          border: 1px solid #007c84;
+          transform: rotate(-90deg);
+        }
+      }
     }
     .setting-mode {
       /* width: 327px; */
@@ -623,24 +972,9 @@ const handleSwitchChange = (v: boolean) => {
   }
 }
 
-.half-circle {
-  position: relative; /* 确保容器相对定位 */
-  width: 200px;
-  height: 100px;
-  background-color: #f5f5f5;
-  border-radius: 50% / 100%; /* 将四角变为圆形 */
-}
-
-.half-circle::after {
-  content: "";
-  position: absolute;
-  bottom: -50%; /* 控制半圆显示的高度 */
-  left: 0;
-  right: 0;
-  top: 50%;
-  border-top: 50px solid transparent; /* 控制上边界线条的长度 */
-  border-bottom: 50px solid transparent; /* 控制下边界线条的长度 */
-  border-left: 100px solid red; /* 控制左边界线条的长度及颜色 */
-  border-right: 100px solid blue; /* 控制右边界线条的长度及颜色 */
+.tet {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
 }
 </style>

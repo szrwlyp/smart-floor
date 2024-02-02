@@ -13,7 +13,7 @@
     },
     {
       "path": "pages/me/index",
-      "style": {}
+      "style": { "navigationStyle": "custom" }
     }
   ],
   "tabBar": {

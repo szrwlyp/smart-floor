@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, reactive, useSlots } from "vue";
+import { useSystemStore } from "@/stores/system";
+const { systemInfo, MenuRect } = useSystemStore();
 
 const slots = useSlots();
 console.log(slots);
@@ -22,10 +24,10 @@ const statusHeight = ref(0);
 // 导航栏内容高度
 const navContentHeight = ref(0);
 
-const setNavBar = (systemInfo: any, rect: any) => {
-  let { statusBarHeight } = systemInfo;
+const setNavBar = () => {
+  let { statusBarHeight } = systemInfo as any;
 
-  let { top, height } = rect;
+  let { top, height } = MenuRect;
 
   // 设置状态栏高度
   statusHeight.value = statusBarHeight;
@@ -35,27 +37,17 @@ const setNavBar = (systemInfo: any, rect: any) => {
 };
 
 const navBarStyle = ref("");
-const setNavBarArrange = (systemInfo: any, rect: any) => {
-  const { statusBarHeight, system, screenWidth, windowWidth } = systemInfo;
-  console.log(systemInfo);
-  console.log(rect);
-
+const setNavBarArrange = () => {
   if (props.mode === "includeMenu") {
     navBarStyle.value = `width:100%;`;
   } else {
-    navBarStyle.value = `width:${rect.left}px;${props.customNavBarStyle}`;
+    navBarStyle.value = `width:${MenuRect.left}px;${props.customNavBarStyle}`;
   }
 };
 onMounted(() => {
-  // 获取系统信息
-  const systemInfo = uni.getSystemInfoSync();
-
-  // 获取胶囊信息
-  const rect = uni.getMenuButtonBoundingClientRect();
-
-  setNavBar(systemInfo, rect);
+  setNavBar();
   // 设置导航栏内容排列
-  setNavBarArrange(systemInfo, rect);
+  setNavBarArrange();
 });
 </script>
 
