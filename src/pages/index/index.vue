@@ -1,5 +1,5 @@
 <template>
-  <view class="index" :class="{ tet: showPopUp }">
+  <view class="index" :class="{ pageFixed: showPopUp }">
     <!-- #ifdef MP -->
     <CustomNavBar mode="includeMenu" :backgroundColor="customNavBarBg">
       <template #left>
@@ -52,118 +52,22 @@
         </view>
 
         <!-- 空调 -->
-        <view v-show="currentDevice === 'kongtiao'" class="device-list">
-          <view class="operation">
-            <view class="o-item" @click="easyShuttleDevices('openAll')">
-              <image
-                class="o-item-image"
-                src="@/static/images/3x/kongtiao@3x.png"
-              >
-              </image>
-              <text class="o-item-text">一键开启全部</text>
-            </view>
-            <view class="o-item" @click="easyShuttleDevices('closeAll')">
-              <image
-                class="o-item-image"
-                src="@/static/images/3x/yijianguanbi@3x.png"
-              >
-              </image>
-              <text class="o-item-text">一键关闭全部</text>
-            </view>
-          </view>
-          <template v-for="(item, index) in deviceList" :key="index">
-            <view class="d-item">
-              <view class="d-item-top">
-                <text class="name">{{ item.name }}</text>
-                <view class="status-setting">
-                  <!-- <switch color="#0EEB92" style="transform: scale(0.5)" /> -->
-                  <customSwitch
-                    v-model="item.status"
-                    @change="handleSwitchChange"
-                  ></customSwitch>
-                  <image
-                    @click="openPopUp(item, index)"
-                    class="setting"
-                    src="@/static/images/3x/setting@3x.png"
-                  >
-                  </image>
-                </view>
-              </view>
-              <view class="d-item-bottom">
-                <modeComp :modeType="item.mode"></modeComp>
-                <view class="device-mode">
-                  <image
-                    class="model-icon"
-                    src="@/static/images/3x/wenduji@3x.png"
-                  >
-                  </image>
-                  <text class="text">气温{{ item.temperature }}°C</text>
-                </view>
-              </view>
-              <view></view>
-            </view>
-          </template>
-        </view>
+        <kongtiao
+          v-if="currentDevice === 'kongtiao'"
+          @openPopUp="openPopUp"
+          @handleSwitchChange="handleSwitchChange"
+          @easyShuttleDevices="easyShuttleDevices"
+          :deviceList="deviceList"
+        ></kongtiao>
 
         <!-- 能耗 -->
-        <view v-show="currentDevice === 'nenghao'" class="nenghao">
-          <view class="overview">
-            <view class="titile">能耗总览</view>
-            <view class="value">
-              <view class="measure">
-                <view class="measure-kw">
-                  <text>235</text>
-                  <text>kw</text>
-                </view>
-                <view class="measure-label">日用电量</view>
-              </view>
-              <view class="measure">
-                <view class="measure-kw">
-                  <text>235</text>
-                  <text>kw</text>
-                </view>
-                <view class="measure-label">月用电量</view>
-              </view>
-              <view class="measure">
-                <view class="measure-kw">
-                  <text>235</text>
-                  <text>kw</text>
-                </view>
-                <view class="measure-label">年用电量</view>
-              </view>
-            </view>
-          </view>
-          <view class="curve-echart">
-            <view class="t">
-              <view class="title">本月用电曲线</view>
-              <view class="month">
-                <view>本月</view>
-              </view></view
-            >
-            <Charts :chartBaseOptions="quxian"></Charts>
-          </view>
-          <view class="curve-echart">
-            <view class="t">
-              <view class="title">电表用电量</view>
-              <view class="month">
-                <view>本月</view>
-              </view></view
-            >
-            <template v-for="(item, index) of companyDosage" :key="index">
-              <view class="company-dosage">
-                <view class="name">
-                  <text>{{ item.companyName }}</text>
-                  <text>{{ item.dosage }}kw</text>
-                </view>
-                <u-line-progress
-                  :percentage="30"
-                  :showText="false"
-                  height="8"
-                  activeColor="#2BC4B8"
-                ></u-line-progress> </view
-            ></template>
-          </view>
-        </view>
+        <nenghao v-if="currentDevice === 'nenghao'"></nenghao>
+
+        <!-- 灯光 -->
+        <dengguang v-if="currentDevice === 'dengguang'"></dengguang>
+
+        <!-- 门禁 -->
+        <menjin v-if="currentDevice === 'menjin'"></menjin>
       </view>
     </view>
     <MyPopUp :showPopUp="showPopUp" @close="closePopUp" @open="open">
@@ -225,9 +129,6 @@
         <view class="popup-submit" @click="handlePopUpSubmit">执行</view>
       </view>
     </MyPopUp>
-    <!-- <Charts :chartBaseOptions="wenduGauge"></Charts> -->
-    <!-- <Charts :chartBaseOptions="wenduGauge"></Charts>
-    <Charts :chartBaseOptions="chartBaseOptions1"></Charts> -->
   </view>
 </template>
 
@@ -236,15 +137,18 @@ import { ref, onMounted } from "vue";
 import { storeToRefs } from "pinia";
 import { onPageScroll } from "@dcloudio/uni-app";
 import CustomNavBar from "@/components/CustomNavBar/CustomNavBar.vue";
-import modeComp from "./modeComp.vue";
+
+import nenghao from "./nenghao.vue";
+import kongtiao from "./kongtiao.vue";
+import dengguang from "./dengguang.vue";
+import menjin from "./menjin.vue";
 import { modeMap, windSpeed } from "@/modules/index";
 
 import customTextSwitch from "@/components/customTextSwitch/customTextSwitch.vue";
-import customSwitch from "@/components/customSwitch/customSwitch.vue";
+
 import Charts from "@/components/eCharts/eCharts.vue";
-import { demo1, demo2 } from "@/modules/eCharts/demo";
 import type { chartBaseOptionsType } from "@/typings/eCharts";
-import { nenghaoOptions } from "@/modules/eCharts/index";
+
 import MyPopUp from "@/components/myPopUp/myPopUp.vue";
 
 import { useGaugeStore } from "@/stores/utils";
@@ -252,19 +156,6 @@ const { currentValueEndAngle, currentSplitNumber } = storeToRefs(
   useGaugeStore()
 );
 const gaugeStore = useGaugeStore();
-
-const chartBaseOptions = ref<chartBaseOptionsType>({
-  width: "750rpx",
-  height: "500rpx",
-  chartsId: "test",
-  setOptions: demo2,
-});
-const chartBaseOptions1 = ref<chartBaseOptionsType>({
-  width: "622rpx",
-  height: "400rpx",
-  chartsId: "test",
-  setOptions: demo2,
-});
 
 const wenduGauge = ref<chartBaseOptionsType>({
   width: "200px",
@@ -389,7 +280,7 @@ const deviceType = ref([
   { title: "门禁", type: "menjin" },
   { title: "视频", type: "shipin" },
 ]);
-const currentDevice = ref("nenghao");
+const currentDevice = ref("menjin");
 const handleDeviceSelected = (type: string) => {
   currentDevice.value = type;
 };
@@ -409,13 +300,6 @@ const handleFloorSelected = (value: string | number) => {
   console.log(value);
   currentFloor.value = value;
 };
-// 一键开启全部
-const easyShuttleDevices = (value: string) => {
-  deviceList.value = deviceList.value.map((item) => {
-    value === "openAll" ? (item.status = true) : (item.status = false);
-    return item;
-  });
-};
 
 // 设备列表
 // mode 1：制冷，2：制热，3：通风，4：键盘上锁
@@ -434,6 +318,16 @@ const deviceList = ref<Array<IDeviceList>>([
   { name: "东侧空调", status: true, mode: 1, temperature: 26 },
   { name: "东侧空调", status: false, mode: 1, temperature: 32 },
 ]);
+const handleSwitchChange = (v: boolean) => {
+  console.log(v);
+};
+// 一键开启全部
+const easyShuttleDevices = (value: string) => {
+  deviceList.value = deviceList.value.map((item) => {
+    value === "openAll" ? (item.status = true) : (item.status = false);
+    return item;
+  });
+};
 
 // 底部弹出框Popup
 const showPopUp = ref(false);
@@ -514,54 +408,6 @@ onPageScroll(({ scrollTop }) => {
   }
 });
 // #endif
-
-const handleSwitchChange = (v: boolean) => {
-  console.log(v);
-  console.log(deviceList.value);
-};
-
-/*******************************************************能耗***************************************************/
-const quxian = ref<chartBaseOptionsType>({
-  width: "622rpx",
-  height: "400rpx",
-  chartsId: "test",
-  setOptions: nenghaoOptions,
-});
-
-const companyDosage = ref([
-  {
-    companyName: "掌舵科技有限公司",
-    dosage: 454,
-  },
-  {
-    companyName: "掌舵科技有限公司",
-    dosage: 200,
-  },
-  {
-    companyName: "掌舵科技有限公司",
-    dosage: 150,
-  },
-  {
-    companyName: "掌舵科技有限公司",
-    dosage: 600,
-  },
-  {
-    companyName: "掌舵科技有限公司",
-    dosage: 1030,
-  },
-  {
-    companyName: "掌舵科技有限公司",
-    dosage: 454,
-  },
-  {
-    companyName: "掌舵科技有限公司",
-    dosage: 410,
-  },
-  {
-    companyName: "掌舵科技有限公司",
-    dosage: 803,
-  },
-]);
 </script>
 
 <style lang="scss" scoped>
@@ -634,159 +480,6 @@ const companyDosage = ref([
             bottom: -2px;
             left: 0;
             border: 1px solid #2bc4b8;
-          }
-        }
-      }
-
-      .device-list {
-        .operation {
-          padding: 20px 0;
-          display: flex;
-          justify-content: space-evenly;
-          border-bottom: 1px solid #f0f0f0;
-          .o-item {
-            display: flex;
-            align-items: center;
-            flex-direction: column;
-            .o-item-image {
-              width: 20px;
-              height: 20px;
-            }
-            .o-item-text {
-              margin-top: 4px;
-              color: #1c2533;
-              font-size: 12px;
-              font-weight: 400;
-            }
-          }
-        }
-        .d-item {
-          padding: 16px 0;
-          border-bottom: 1px solid #f0f0f0;
-          .d-item-top {
-            display: flex;
-            justify-content: space-between;
-            .name {
-              color: #000000;
-              font-size: 16px;
-              font-weight: 500;
-              vertical-align: middle;
-            }
-            .status-setting {
-              display: flex;
-              align-items: center;
-              .status {
-                width: 20px;
-                height: 20px;
-              }
-              .setting {
-                width: 20px;
-                height: 20px;
-                margin-left: 14px;
-              }
-            }
-          }
-
-          .d-item-bottom {
-            margin-top: 12px;
-            display: flex;
-            .device-mode {
-              display: flex;
-              align-items: center;
-              background: #e9f2f2;
-              width: 80px;
-              height: 24px;
-              justify-content: center;
-              border-radius: 4px;
-              margin-right: 8px;
-              .model-icon {
-                width: 16px;
-                height: 16px;
-              }
-              .text {
-                margin-left: 4px;
-                color: #385956;
-                font-size: 12px;
-                font-weight: 400;
-              }
-            }
-          }
-        }
-      }
-
-      .nenghao {
-        .overview {
-          /* height: 110px; */
-          margin-top: 16px;
-          padding: 16px 12px;
-          background: url("@/static/images/3x/nenghao_bg@3x.png") no-repeat;
-          background-size: 100%;
-          .titile {
-            color: #324761;
-            font-size: 14px;
-            font-weight: 500;
-          }
-          .value {
-            margin-top: 12px;
-            display: flex;
-            justify-content: space-around;
-            .measure {
-              .measure-kw {
-                text:nth-child(1) {
-                  color: #00ba82;
-                  font-size: 16px;
-                  font-weight: 500;
-                }
-                text:nth-child(2) {
-                  font-size: 12px;
-                  color: #91969e;
-                  font-weight: 400;
-                  margin-left: 3px;
-                }
-              }
-              .measure-label {
-                font-size: 12px;
-                font-weight: 400;
-                color: #535a66;
-                margin-top: 6px;
-              }
-            }
-          }
-        }
-        .curve-echart {
-          margin-top: 16px;
-          .t {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 14px;
-            align-items: center;
-
-            .title {
-              font-size: 16px;
-              font-weight: 500;
-              color: #000;
-            }
-            .month {
-              width: 80px;
-              height: 32px;
-              border-radius: 4px;
-              background: #ffffff;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              border: 1px solid #f0f0f0;
-            }
-          }
-          .company-dosage {
-            margin-bottom: 16px;
-            .name {
-              color: #7f8694;
-              font-size: 14px;
-              display: flex;
-              justify-content: space-between;
-              margin-bottom: 8px;
-              /* text:nth-child(1){} */
-            }
           }
         }
       }
@@ -972,7 +665,7 @@ const companyDosage = ref([
   }
 }
 
-.tet {
+.pageFixed {
   overflow: hidden;
   position: fixed;
   width: 100%;

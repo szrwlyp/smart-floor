@@ -83,25 +83,22 @@ export const nenghaoOptions = {
       type: "line",
       smooth: true,
       symbol: "none",
-      lineStyle: { cap: "round" },
+      lineStyle: {
+        width: 4, // 线条宽度
+        cap: "round",
+      },
       itemStyle: {
         // borderCap: "round",
-        normal: {
-          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            {
-              offset: 0,
-              color: "#5ED7FF", // 结束颜色
-            },
-            {
-              offset: 1,
-              color: "#5BD9CE", // 起始颜色
-            },
-          ]),
-          lineStyle: {
-            width: 4, // 线条宽度
-            cap: "round",
+        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+          {
+            offset: 0,
+            color: "#5ED7FF", // 结束颜色
           },
-        },
+          {
+            offset: 1,
+            color: "#5BD9CE", // 起始颜色
+          },
+        ]),
       },
     },
   ],
