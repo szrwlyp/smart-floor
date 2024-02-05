@@ -280,7 +280,7 @@ const deviceType = ref([
   { title: "门禁", type: "menjin" },
   { title: "视频", type: "shipin" },
 ]);
-const currentDevice = ref("menjin");
+const currentDevice = ref("kongtiao");
 const handleDeviceSelected = (type: string) => {
   currentDevice.value = type;
 };
@@ -487,7 +487,7 @@ onPageScroll(({ scrollTop }) => {
   }
   .pop-setting {
     padding: 16px;
-    /* #ifdef H5 */
+    /* #ifndef MP */
     padding: 16px 16px 70px 16px;
     /* #endif */
 

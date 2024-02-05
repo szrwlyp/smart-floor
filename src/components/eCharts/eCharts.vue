@@ -3,12 +3,16 @@ import LEchart from "@/uni_modules/lime-echart/components/l-echart/l-echart.vue"
 import { ref, onMounted, toRefs, watch } from "vue";
 import type { chartBaseOptionsType } from "@/typings/eCharts";
 
+// #ifdef VUE2
+import * as echarts from "@/uni_modules/lime-echart/static/echarts.min";
+// #endif
+
 // #ifdef VUE3
 // #ifdef MP
 const echarts = require("../../uni_modules/lime-echart/static/echarts.min");
 // #endif
 
-// #ifdef WEB
+// #ifndef MP
 import * as echarts from "echarts";
 import {
   BarChart,
@@ -38,14 +42,14 @@ import { LabelLayout, UniversalTransition } from "echarts/features";
 import { CanvasRenderer } from "echarts/renderers";
 
 // 通过 ComposeOption 来组合出一个只有必须组件和图表的 Option 类型
-type ECOption = echarts.ComposeOption<
-  | BarSeriesOption
-  | LineSeriesOption
-  | TitleComponentOption
-  | TooltipComponentOption
-  | GridComponentOption
-  | DatasetComponentOption
->;
+// type ECOption = echarts.ComposeOption<
+//   | BarSeriesOption
+//   | LineSeriesOption
+//   | TitleComponentOption
+//   | TooltipComponentOption
+//   | GridComponentOption
+//   | DatasetComponentOption
+// >;
 
 // 注册必须的组件
 echarts.use([

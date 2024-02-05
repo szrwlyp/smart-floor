@@ -9,11 +9,19 @@
   "pages": [
     {
       "path": "pages/index/index",
-      "style": { "navigationStyle": "custom" }
+      "style": {
+        // #ifdef MP || WEB
+        "navigationStyle": "custom"
+        // #endif
+      }
     },
     {
       "path": "pages/me/index",
-      "style": { "navigationStyle": "custom" }
+      "style": {
+        // #ifdef MP || WEB
+        "navigationStyle": "custom"
+        // #endif
+      }
     }
   ],
   "tabBar": {

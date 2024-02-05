@@ -18,12 +18,12 @@ const props = withDefaults(defineProps<PopUp>(), {
 
 const emits = defineEmits(["close", "open"]);
 const popUpHeight = ref(0);
+
 onMounted(() => {
-  // #ifdef H5
-  popUpHeight.value = systemInfo.screenHeight - 100;
-  // #endif
+  popUpHeight.value = systemInfo.windowHeight - 100;
+
   // #ifdef MP
-  popUpHeight.value = systemInfo.screenHeight - getNavContentHeight() - 100;
+  popUpHeight.value = systemInfo.windowHeight - getNavContentHeight() - 100;
   // #endif
 });
 
@@ -32,6 +32,10 @@ const close = () => {
 };
 const open = () => {
   console.log("打开了");
+  // uToastRef.value.show({ message: systemInfo.windowHeight, duration: 3000 });
+  // setTimeout(() => {
+  //   uToastRef.value.show({ message: popUpHeight.value, duration: 3000 });
+  // }, 3000);
   emits("open");
 };
 </script>
@@ -50,7 +54,8 @@ const open = () => {
         'border-top-left-radius': `${props.round}px`,
         'border-top-right-radius': `${props.round}px`,
       }"
-      ><slot></slot>
+    >
+      <slot></slot>
     </view>
   </u-popup>
 </template>

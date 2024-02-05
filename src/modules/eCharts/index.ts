@@ -3,7 +3,7 @@
 const echarts = require("../../uni_modules/lime-echart/static/echarts.min");
 // #endif
 
-// #ifdef WEB
+// #ifndef MP
 import * as echarts from "echarts";
 import {
   BarChart,
